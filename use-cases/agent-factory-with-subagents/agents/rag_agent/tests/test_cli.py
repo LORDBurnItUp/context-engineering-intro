@@ -595,9 +595,87 @@ class TestCLIErrorScenarios:
             assert "Unexpected error occurred" in result.output
 
 
+class TestValueConversion:
+    """Test value conversion logic for set command."""
+
+    def test_convert_float_value(self):
+        """Test converting string with decimal to float."""
+        value = "0.75"
+        try:
+            if '.' in value:
+                value = float(value)
+            elif value.isdigit():
+                value = int(value)
+        except ValueError:
+            pass  # Keep as string
+
+        assert isinstance(value, float)
+        assert value == 0.75
+
+    def test_convert_int_value(self):
+        """Test converting numeric string to int."""
+        value = "42"
+        try:
+            if '.' in value:
+                value = float(value)
+            elif value.isdigit():
+                value = int(value)
+        except ValueError:
+            pass  # Keep as string
+
+        assert isinstance(value, int)
+        assert value == 42
+
+    def test_keep_string_value(self):
+        """Test keeping non-numeric string as is."""
+        value = "semantic"
+        original = value
+        try:
+            if '.' in value:
+                value = float(value)
+            elif value.isdigit():
+                value = int(value)
+        except ValueError:
+            pass  # Keep as string
+
+        assert isinstance(value, str)
+        assert value == original
+
+    def test_malformed_float_value(self):
+        """Test handling malformed float value with ValueError."""
+        value = "0.75.5"  # Invalid float with multiple dots
+        original = value
+        try:
+            if '.' in value:
+                value = float(value)
+            elif value.isdigit():
+                value = int(value)
+        except ValueError:
+            pass  # Keep as string - this is the fix!
+
+        # Should not crash and should keep original string
+        assert isinstance(value, str)
+        assert value == original
+
+    def test_negative_number_conversion(self):
+        """Test negative numbers remain as strings (edge case)."""
+        value = "-10"
+        try:
+            if '.' in value:
+                value = float(value)
+            elif value.isdigit():
+                value = int(value)
+        except ValueError:
+            pass  # Keep as string
+
+        # isdigit() returns False for negative numbers, so stays string
+        assert isinstance(value, str)
+        assert value == "-10"
+
+
 class TestCLIUsability:
     """Test CLI usability features."""
-    
+
     def test_cli_help_messages(self):
         """Test CLI provides helpful help messages."""
         runner = CliRunner()

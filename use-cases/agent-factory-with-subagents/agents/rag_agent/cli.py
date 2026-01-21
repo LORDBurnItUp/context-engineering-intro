@@ -243,7 +243,7 @@ async def main():
                                 value = float(value)
                             elif value.isdigit():
                                 value = int(value)
-                        except:
+                        except ValueError:
                             pass  # Keep as string
                         deps.set_user_preference(key, value)
                         console.print(f"[green]✓[/green] Set {key} = {value}")
