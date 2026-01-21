@@ -1,0 +1,125 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: callcenter_postgres
+    environment:
+      POSTGRES_USER: callcenter
+      POSTGRES_PASSWORD: changeme_production
+      POSTGRES_DB: callcenter
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U callcenter"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis Cache
+  redis:
+    image: redis:7-alpine
+    container_name: callcenter_redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # ChromaDB Vector Database
+  chromadb:
+    image: chromadb/chroma:latest
+    container_name: callcenter_chromadb
+    ports:
+      - "8000:8000"
+    volumes:
+      - chroma_data:/chroma/chroma
+    environment:
+      - IS_PERSISTENT=TRUE
+      - ANONYMIZED_TELEMETRY=FALSE
+
+  # LiveKit Server (Media)
+  livekit:
+    image: livekit/livekit-server:latest
+    container_name: callcenter_livekit
+    command: --config /etc/livekit.yaml
+    ports:
+      - "7880:7880"  # WebSocket
+      - "7881:7881"  # HTTP
+      - "7882:7882/udp"  # RTC
+    volumes:
+      - ./livekit.yaml:/etc/livekit.yaml
+    environment:
+      - LIVEKIT_KEYS=${LIVEKIT_API_KEY} ${LIVEKIT_API_SECRET}
+
+  # FastAPI Web Dashboard
+  web_api:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    container_name: callcenter_api
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../.env
+    depends_on:
+      - postgres
+      - redis
+      - chromadb
+    volumes:
+      - ../:/app
+      - /app/venv_linux  # Exclude venv
+    command: uvicorn web_interface.dashboard:app --host 0.0.0.0 --port 8080 --reload
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # LiveKit Voice Agent Workers
+  voice_agents:
+    build:
+      context: ..
+      dockerfile: deployment/Dockerfile
+    container_name: callcenter_voice_agents
+    env_file:
+      - ../.env
+    depends_on:
+      - livekit
+      - postgres
+      - chromadb
+    volumes:
+      - ../:/app
+    command: python -m livekit_integration.voice_agent
+    deploy:
+      replicas: 3  # Run 3 agent workers
+
+  # Nginx Reverse Proxy
+  nginx:
+    image: nginx:alpine
+    container_name: callcenter_nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./ssl:/etc/nginx/ssl:ro
+    depends_on:
+      - web_api
+      - livekit
+
+volumes:
+  postgres_data:
+  redis_data:
+  chroma_data:
+
+networks:
+  default:
+    name: callcenter_network
