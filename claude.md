@@ -16,13 +16,11 @@
 - **Binary Location**: `/opt/node22/bin/claude`
 
 ### JetBrains IDE
-- **Status**: ⚠️ Not currently installed
-- **Note**: JetBrains IDEs (IntelliJ IDEA, PyCharm, WebStorm, etc.) need to be installed separately
-- **Recommended**: PyCharm (for Python development)
-- **Installation Options**:
-  - Download JetBrains Toolbox: https://www.jetbrains.com/toolbox-app/
-  - Direct download PyCharm: https://www.jetbrains.com/pycharm/download/
-  - Or use manual installation (see below)
+- **PyCharm Status**: ✅ Installed
+- **PyCharm Version**: Community 2024.3.2
+- **Location**: `/opt/pycharm-community-2024.3.2`
+- **Launch Command**: `/opt/pycharm-community-2024.3.2/bin/pycharm.sh`
+- **WebStorm**: ✅ Already installed by user
 
 ### Project Structure
 - Main configuration file: `CLAUDE.md` (uppercase)
@@ -94,8 +92,38 @@ tar -xzf pycharm-community-latest.tar.gz -C /opt/
 - Bash commands: grep, ls, source, find, mv, mkdir, tree, ruff, touch, cat, pytest, python
 - WebFetch: docs.anthropic.com, github.com
 
+## Claude Code Projects Workspace
+
+### Main Workspace Directory
+- **Linux Path**: `/root/ClaudeCodeProjects` (or `~/ClaudeCodeProjects`)
+- **Windows C: Drive**: See `WINDOWS_SETUP.md` for WSL configuration
+
+### Workspace Structure
+```
+ClaudeCodeProjects/
+├── personal/          # Personal projects
+├── work/             # Work-related projects
+├── experiments/      # Testing and experimental code
+├── templates/        # Project templates
+└── README.md         # Quick reference
+```
+
+### Quick Start New Project
+```bash
+cd ~/ClaudeCodeProjects/personal
+mkdir my-new-project && cd my-new-project
+git init
+claude
+```
+
+### Open Project in PyCharm
+```bash
+/opt/pycharm-community-2024.3.2/bin/pycharm.sh ~/ClaudeCodeProjects/personal/my-project
+```
+
 ## Notes
 - This session is working on branch: `claude/setup-claude-md-cli-iQlLI`
 - Virtual environment: `venv_linux` (for Python commands)
 - All git operations should be performed on the feature branch
 - Session files stored in: `/home/user/context-engineering-intro`
+- **See WINDOWS_SETUP.md for C: drive configuration**
